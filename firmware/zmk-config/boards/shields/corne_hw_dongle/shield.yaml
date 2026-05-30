@@ -1,0 +1,8 @@
+identifier: corne_hw_right
+name: Corne HW Right
+type: shield
+url: https://zmk.dev
+requires: [ ]
+features:
+  - keys
+siblings: [ corne_hw_left ]
