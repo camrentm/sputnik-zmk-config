@@ -4,7 +4,60 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@main
-    with:
-      config_path: "firmware/zmk-config/config"
-      build_matrix_path: "firmware/zmk-config/build.yaml"
+    runs-on: ubuntu-latest
+    container:
+      image: zmkfirmware/zmk-build-arm:stable
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shield: corne_hw_dongle
+            snippet: studio-rpc-usb-uart
+            cmake-args: -DCONFIG_ZMK_STUDIO=y
+            artifact-name: corne_hw_dongle
+          - shield: corne_hw_left nice_view_adapter nice_view_gem
+            artifact-name: corne_hw_left
+          - shield: corne_hw_right nice_view_adapter nice_view_gem
+            artifact-name: corne_hw_right
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create build directory
+        run: echo "build_dir=$(mktemp -d)" >> $GITHUB_ENV
+
+      - name: West Init
+        working-directory: firmware/zmk-config
+        run: west init -l config
+
+      - name: West Update
+        working-directory: firmware/zmk-config
+        run: west update
+
+      - name: West Zephyr export
+        working-directory: firmware/zmk-config
+        run: west zephyr-export
+
+      - name: West Build
+        working-directory: firmware/zmk-config
+        shell: sh -x {0}
+        run: |
+          west build -s zmk/app -d "${{ env.build_dir }}" -b nice_nano_v2 \
+            ${{ matrix.snippet && format('-S {0}', matrix.snippet) || '' }} -- \
+            -DSHIELD="${{ matrix.shield }}" \
+            -DZMK_CONFIG="${GITHUB_WORKSPACE}/firmware/zmk-config/config" \
+            -DSHIELD_ROOT="${GITHUB_WORKSPACE}/firmware/zmk-config" \
+            ${{ matrix.cmake-args }}
+
+      - name: Rename artifact
+        run: |
+          mkdir -p "${{ env.build_dir }}/artifacts"
+          if [ -f "${{ env.build_dir }}/zephyr/zmk.uf2" ]; then
+            cp "${{ env.build_dir }}/zephyr/zmk.uf2" "${{ env.build_dir }}/artifacts/${{ matrix.artifact-name }}.uf2"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: ${{ env.build_dir }}/artifacts
