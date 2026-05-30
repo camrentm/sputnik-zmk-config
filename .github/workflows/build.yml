@@ -42,7 +42,7 @@ jobs:
         working-directory: firmware/zmk-config
         shell: sh -x {0}
         run: |
-          west build -s zmk/app -d "${{ env.build_dir }}" -b nice_nano_v2 \
+          west build -s zmk/app -d "${{ env.build_dir }}" -b nice_nano \
             ${{ matrix.snippet && format('-S {0}', matrix.snippet) || '' }} -- \
             -DSHIELD="${{ matrix.shield }}" \
             -DZMK_CONFIG="${GITHUB_WORKSPACE}/firmware/zmk-config/config" \
