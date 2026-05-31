@@ -1,0 +1,12 @@
+if SHIELD_CORNE_HW_DONGLE
+
+config ZMK_SPLIT
+	def_bool y
+
+config ZMK_SPLIT_ROLE_CENTRAL
+	def_bool y
+
+config ZMK_KEYBOARD_NAME
+	default "Sputnik Dongle"
+
+endif

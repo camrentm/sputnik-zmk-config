@@ -1,0 +1,9 @@
+if SHIELD_CORNE_HW_LEFT
+
+config ZMK_SPLIT
+	def_bool y
+
+config ZMK_SPLIT_ROLE_CENTRAL
+	def_bool n
+
+endif
